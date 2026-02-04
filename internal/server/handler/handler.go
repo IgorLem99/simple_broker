@@ -18,13 +18,13 @@ func New(b *broker.Broker) *Handler {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 5 {
+	if len(parts) < 4 {
 		http.NotFound(w, r)
 		return
 	}
 
-	queueName := parts[3]
-	action := parts[4]
+	queueName := parts[2]
+	action := parts[3]
 
 	switch {
 	case r.Method == http.MethodPost && action == "messages":
@@ -89,13 +89,22 @@ func (h *Handler) postSubscription(w http.ResponseWriter, r *http.Request, queue
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	for msg := range sub {
-		if err := json.NewEncoder(w).Encode(msg); err != nil {
+	for {
+		select {
+		case <-r.Context().Done():
 			q.Unsubscribe(sub)
 			return
-		}
-		if f, ok := w.(http.Flusher); ok {
-			f.Flush()
+		case msg, ok := <-sub:
+			if !ok {
+				return
+			}
+			if err := json.NewEncoder(w).Encode(msg); err != nil {
+				q.Unsubscribe(sub)
+				return
+			}
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
 		}
 	}
 }

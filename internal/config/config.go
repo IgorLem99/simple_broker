@@ -6,9 +6,9 @@ import (
 )
 
 type QueueConfig struct {
-	Name      string `json:"name"`
-	Size      int    `json:"size"`
-	MaxSub    int    `json:"max_sub"`
+	Name   string `json:"name"`
+	Size   int    `json:"size"`
+	MaxSub int    `json:"max_sub"`
 }
 
 type Config struct {
@@ -17,14 +17,14 @@ type Config struct {
 }
 
 func Load(path string) (*Config, error) {
-	f, err := os.Open(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer file.Close()
 
 	var cfg Config
-	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
+	if err := json.NewDecoder(file).Decode(&cfg); err != nil {
 		return nil, err
 	}
 
