@@ -1,0 +1,10 @@
+{
+  "addr": ":8080",
+  "queues": [
+    {
+      "name": "app_events",
+      "size": 100,
+      "max_sub": 10
+    }
+  ]
+}
