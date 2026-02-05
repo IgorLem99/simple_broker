@@ -102,7 +102,9 @@ func TestHandler_PostSubscription(t *testing.T) {
 		time.Sleep(200 * time.Millisecond)
 
 		q, _ := b.GetQueue("q1")
-		q.Send("test message")
+		if err := q.Send("test message"); err != nil {
+			t.Fatalf("failed to send message: %v", err)
+		}
 
 		time.Sleep(200 * time.Millisecond)
 		cancel()
