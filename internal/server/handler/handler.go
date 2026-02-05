@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"broker/internal/broker"
+	"simple_broker/internal/broker"
 )
 
 type Handler struct {

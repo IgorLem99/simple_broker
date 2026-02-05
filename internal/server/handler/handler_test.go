@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"broker/internal/broker"
-	"broker/internal/config"
+	"simple_broker/internal/broker"
+	"simple_broker/internal/config"
 	"context"
 	"net/http"
 	"net/http/httptest"
