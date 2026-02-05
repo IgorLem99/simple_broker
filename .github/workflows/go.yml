@@ -10,22 +10,56 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: '1.22'
         cache: true
 
-    - name: Verify dependencies
-      run: |
-        go mod tidy
-        go mod verify
-
     - name: Build
       run: go build -v ./...
 
+  tests:
+    # Задание "tests" зависит от задания "build" и будет выполнено после него
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+        cache: true
+
     - name: Test
-      run: go test -v -race ./...
+      run: go test -v ./...
+
+  # Задание проверяет наличие в коде состояния гонки
+  tests-race:
+    # Задание "tests-race" зависит от задания "build" и будет выполнено после него
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+        cache: true
+
+    - name: Test Race
+      run: go test -race -v ./...
+
+  # Задание проверяет код на соответствие стилю и отсутствие логических ошибок
+  lint:
+    # Задание "lint" зависит от заданий "tests" и "tests-race" и будет выполнено после них
+    needs: [tests, tests-race]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+      # Используется действие "golangci/golangci-lint-action@v6", которое запускает линтер
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest

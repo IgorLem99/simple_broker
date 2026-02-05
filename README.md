@@ -14,22 +14,22 @@ A simple message broker implemented in Go.
 
 ### Send a message
 
-- **URL:** `/v1/queues/{queue_name}/messages`
+- **URL:** `/queues/{queue_name}/messages`
 - **Method:** `POST`
 - **Body:** JSON message
 - **Example:**
   ```bash
-  curl -X POST -d '{"event":"delivered"}' http://localhost:8080/v1/queues/app_events/messages
+  curl -X POST -d '{"event":"delivered"}' http://localhost:8080/queues/app_events/messages
   ```
 
 ### Subscribe to a queue
 
-- **URL:** `/v1/queues/{queue_name}/subscriptions`
+- **URL:** `/queues/{queue_name}/subscriptions`
 - **Method:** `POST`
 - **Description:** Subscribes to a queue and receives messages as they are sent. The connection is kept open.
 - **Example:**
   ```bash
-  curl -X POST http://localhost:8080/v1/queues/app_events/subscriptions
+  curl -X POST http://localhost:8080/queues/app_events/subscriptions
   ```
 
 ## How to run
@@ -46,7 +46,7 @@ A simple message broker implemented in Go.
     ```
 3.  In another terminal, send a message:
     ```bash
-    curl -X POST -d '{"event":"delivered"}' http://localhost:8080/v1/queues/app_events/messages
+    curl -X POST -d '{"event":"delivered"}' http://localhost:8080/queues/app_events/messages
     ```
 
 ### With Docker
@@ -59,4 +59,3 @@ A simple message broker implemented in Go.
     ```bash
     docker run -p 8080:8080 broker
     ```
-

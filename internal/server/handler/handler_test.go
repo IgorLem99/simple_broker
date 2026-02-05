@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/IgorLem99/Simple_broker/internal/broker"
-	"github.com/IgorLem99/Simple_broker/internal/config"
+	"github.com/IgorLem99/simple_broker/internal/broker"
+	"github.com/IgorLem99/simple_broker/internal/config"
 
 	"context"
 	"net/http"

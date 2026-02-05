@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	resp, err := http.Post("http://localhost:8080/v1/queues/app_events/subscriptions", "", nil)
+	resp, err := http.Post("http://localhost:8080/queues/app_events/subscriptions", "", nil)
 	if err != nil {
 		fmt.Printf("Error subscribing: %v\n", err)
 		return
