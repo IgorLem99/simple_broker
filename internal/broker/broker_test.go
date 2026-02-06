@@ -206,7 +206,6 @@ func TestQueue_Broadcaster(t *testing.T) {
 	wg.Wait()
 
 	// Check if message is removed from queue
-	time.Sleep(100 * time.Millisecond) // give broadcaster time to remove message
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 	if len(q.msgs) != 0 {

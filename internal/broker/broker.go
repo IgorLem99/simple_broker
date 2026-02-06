@@ -19,6 +19,7 @@ type Subscriber chan Message
 
 type Queue struct {
 	mu     sync.RWMutex
+	cond   *sync.Cond
 	name   string
 	size   int
 	maxSub int
@@ -36,6 +37,7 @@ func NewQueue(cfg config.QueueConfig) *Queue {
 		subs:   make(map[Subscriber]struct{}),
 		done:   make(chan struct{}),
 	}
+	q.cond = sync.NewCond(&q.mu)
 	go q.broadcaster()
 	return q
 }
@@ -50,6 +52,7 @@ func (q *Queue) Subscribe() (Subscriber, error) {
 
 	sub := make(Subscriber)
 	q.subs[sub] = struct{}{}
+	q.cond.Signal()
 
 	return sub, nil
 }
@@ -58,8 +61,10 @@ func (q *Queue) Unsubscribe(sub Subscriber) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	delete(q.subs, sub)
-	close(sub)
+	if _, ok := q.subs[sub]; ok {
+		delete(q.subs, sub)
+		close(sub)
+	}
 }
 
 func (q *Queue) Send(msg Message) error {
@@ -71,46 +76,67 @@ func (q *Queue) Send(msg Message) error {
 	}
 
 	q.msgs = append(q.msgs, msg)
+	q.cond.Signal()
 
 	return nil
 }
 
 func (q *Queue) broadcaster() {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
 	for {
 		select {
 		case <-q.done:
 			return
 		default:
-			q.mu.Lock()
-			if len(q.msgs) == 0 || len(q.subs) == 0 {
-				q.mu.Unlock()
-				continue
+		}
+
+		for len(q.msgs) == 0 || len(q.subs) == 0 {
+			q.cond.Wait()
+			select {
+			case <-q.done:
+				return
+			default:
 			}
+		}
 
-			msg := q.msgs[0]
+		msg := q.msgs[0]
 
-			var wg sync.WaitGroup
-			wg.Add(len(q.subs))
+		var wg sync.WaitGroup
+		wg.Add(len(q.subs))
 
-			for sub := range q.subs {
-				go func(sub Subscriber) {
-					defer wg.Done()
-					sub <- msg
-				}(sub)
-			}
+		for sub := range q.subs {
+			go func(sub Subscriber) {
+				defer wg.Done()
+				sub <- msg
+			}(sub)
+		}
 
-			wg.Wait()
+		wg.Wait()
 
-			if len(q.msgs) > 0 {
-				q.msgs = q.msgs[1:]
-			}
-			q.mu.Unlock()
+		if len(q.msgs) > 0 {
+			q.msgs = q.msgs[1:]
 		}
 	}
 }
 
 func (q *Queue) Close() {
-	close(q.done)
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	select {
+	case <-q.done:
+		return
+	default:
+		close(q.done)
+	}
+
+	for sub := range q.subs {
+		delete(q.subs, sub)
+		close(sub)
+	}
+	q.cond.Broadcast()
 }
 
 type Broker struct {
